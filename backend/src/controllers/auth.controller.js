@@ -20,4 +20,13 @@ const login = async (req, res) => {
   }
 }
 
-module.exports = { register, login }
+const getMe = async (req, res) => {
+  try {
+    const result = await authService.getMe(req.user.id_user, req.user.role)
+    return successResponse(res, result, 'Data user berhasil diambil')
+  } catch (error) {
+    return errorResponse(res, error.message, 400)
+  }
+}
+
+module.exports = { register, login, getMe }

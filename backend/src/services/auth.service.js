@@ -67,4 +67,61 @@ const login = async (email, password) => {
     return { token, role: user.role }
 }
 
-module.exports = { register, login }
+const getMe = async (id_user, role) => {
+  const user = await prisma.user.findUnique({
+    where: { id_user },
+    select: {
+      id_user: true,
+      nama: true,
+      email: true,
+      no_telepon: true,
+      role: true,
+      last_login: true
+    }
+  })
+
+  if (!user) throw new Error('User tidak ditemukan')
+
+  // ambil data tambahan sesuai role
+  if (role === 'CUSTOMER') {
+    const customer = await prisma.customer.findUnique({
+      where: { id_user },
+      select: {
+        id_customer: true,
+        alamat: true,
+        tanggal_lahir: true,
+        tanggal_daftar: true
+      }
+    })
+    return { ...user, ...customer }
+  }
+
+  if (role === 'ADMIN') {
+    const admin = await prisma.admin.findUnique({
+      where: { id_user },
+      select: {
+        id_admin: true,
+        id_outlet: true
+      }
+    })
+    return { ...user, ...admin }
+  }
+
+  if (role === 'KURIR') {
+    const kurir = await prisma.kurir.findUnique({
+      where: { id_user },
+      select: {
+        id_kurir: true,
+        id_outlet: true,
+        jenis_kendaraan: true,
+        nomor_kendaraan: true,
+        status_kurir: true
+      }
+    })
+    return { ...user, ...kurir }
+  }
+
+  return user
+}
+
+module.exports = { register, login, getMe }
