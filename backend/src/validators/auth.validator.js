@@ -14,4 +14,29 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password wajib diisi')
 })
 
-module.exports = { registerSchema, loginSchema }
+const updateCustomerSchema = z.object({
+  nama: z.string().trim().min(1).optional(),
+  no_telepon: z.string().min(10).optional(),
+  alamat: z.string().optional(),
+  tanggal_lahir: z.string().optional()
+})
+
+const updateAdminSchema = z.object({
+  nama: z.string().trim().min(1).optional(),
+  no_telepon: z.string().min(10).optional()
+})
+
+const updateKurirSchema = z.object({
+  nama: z.string().trim().min(1).optional(),
+  no_telepon: z.string().min(10).optional(),
+  jenis_kendaraan: z.string().optional(),
+  nomor_kendaraan: z.string().optional()
+})
+
+module.exports = {
+  registerSchema,
+  loginSchema,
+  updateCustomerSchema,
+  updateAdminSchema,
+  updateKurirSchema
+}
