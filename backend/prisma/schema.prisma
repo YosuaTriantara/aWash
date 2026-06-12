@@ -51,23 +51,54 @@ enum MetodeAmbil {
   DIJEMPUT_SENDIRI
 }
 
-model Customer {
-  id_customer String @id @default(uuid())
+enum Role {
+  CUSTOMER
+  ADMIN
+  KURIR
+}
 
-  nama_customer       String
-  email_customer      String    @unique
-  password_hash       String
-  no_telepon_customer String
-  tanggal_lahir       DateTime?
-  tanggal_daftar      DateTime  @default(now())
-  alamat              String
+model User {
+  id_user String @id @default(uuid())
+
+  nama          String
+  email         String @unique
+  password_hash String
+
+  no_telepon String?
+
+  role Role
+
+  is_active Boolean @default(true)
+
+  last_login DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  customer Customer?
+  admin    Admin?
+  kurir    Kurir?
+
+  @@map("user")
+}
+
+model Customer {
+  id_customer String @id @default(uuid())
+  id_user     String @unique
+
+  tanggal_lahir  DateTime?
+  tanggal_daftar DateTime  @default(now())
+  alamat         String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [id_user], references: [id_user])
+
   pemesanan Pemesanan[]
   ulasan    Ulasan[]
 
+  @@index([id_user])
   @@map("customer")
 }
 
@@ -91,16 +122,15 @@ model Outlet {
 }
 
 model Admin {
-  id_admin  String @id @default(uuid())
-  id_outlet String
+  id_admin String @id @default(uuid())
 
-  nama_admin    String
-  email_admin   String @unique
-  password_hash String
+  id_user   String @unique
+  id_outlet String
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  user   User   @relation(fields: [id_user], references: [id_user])
   outlet Outlet @relation(fields: [id_outlet], references: [id_outlet])
 
   @@index([id_outlet])
@@ -108,19 +138,22 @@ model Admin {
 }
 
 model Kurir {
-  id_kurir  String @id @default(uuid())
+  id_kurir String @id @default(uuid())
+
+  id_user   String @unique
   id_outlet String
 
-  nama_kurir          String
-  nomor_telepon_kurir String
-  jenis_kendaraan     String
-  nomor_kendaraan     String
-  status_kurir        StatusKurir
+  jenis_kendaraan String
+  nomor_kendaraan String
+
+  status_kurir StatusKurir
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  outlet    Outlet      @relation(fields: [id_outlet], references: [id_outlet])
+  user   User   @relation(fields: [id_user], references: [id_user])
+  outlet Outlet @relation(fields: [id_outlet], references: [id_outlet])
+
   pemesanan Pemesanan[]
 
   @@index([id_outlet])
@@ -163,10 +196,10 @@ model Pemesanan {
   catatan        String?
   durasi_layanan DurasiLayanan
 
-  metode_antar String?
+  metode_antar MetodeAntar
   waktu_antar  DateTime?
 
-  metode_ambil String?
+  metode_ambil MetodeAmbil
   waktu_ambil  DateTime?
 
   foto_penjemputan_url     String?

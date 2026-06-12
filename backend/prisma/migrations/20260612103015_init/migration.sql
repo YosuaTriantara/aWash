@@ -22,13 +22,29 @@ CREATE TYPE "MetodeAntar" AS ENUM ('DIANTAR_KURIR', 'DIBAWA_SENDIRI');
 -- CreateEnum
 CREATE TYPE "MetodeAmbil" AS ENUM ('DIAMBIL_KURIR', 'DIJEMPUT_SENDIRI');
 
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('CUSTOMER', 'ADMIN', 'KURIR');
+
+-- CreateTable
+CREATE TABLE "user" (
+    "id_user" TEXT NOT NULL,
+    "nama" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password_hash" TEXT NOT NULL,
+    "no_telepon" TEXT,
+    "role" "Role" NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "last_login" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "user_pkey" PRIMARY KEY ("id_user")
+);
+
 -- CreateTable
 CREATE TABLE "customer" (
     "id_customer" TEXT NOT NULL,
-    "nama_customer" TEXT NOT NULL,
-    "email_customer" TEXT NOT NULL,
-    "password_hash" TEXT NOT NULL,
-    "no_telepon_customer" TEXT NOT NULL,
+    "id_user" TEXT NOT NULL,
     "tanggal_lahir" TIMESTAMP(3),
     "tanggal_daftar" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "alamat" TEXT NOT NULL,
@@ -55,10 +71,8 @@ CREATE TABLE "outlet" (
 -- CreateTable
 CREATE TABLE "admin" (
     "id_admin" TEXT NOT NULL,
+    "id_user" TEXT NOT NULL,
     "id_outlet" TEXT NOT NULL,
-    "nama_admin" TEXT NOT NULL,
-    "email_admin" TEXT NOT NULL,
-    "password_hash" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -68,9 +82,8 @@ CREATE TABLE "admin" (
 -- CreateTable
 CREATE TABLE "kurir" (
     "id_kurir" TEXT NOT NULL,
+    "id_user" TEXT NOT NULL,
     "id_outlet" TEXT NOT NULL,
-    "nama_kurir" TEXT NOT NULL,
-    "nomor_telepon_kurir" TEXT NOT NULL,
     "jenis_kendaraan" TEXT NOT NULL,
     "nomor_kendaraan" TEXT NOT NULL,
     "status_kurir" "StatusKurir" NOT NULL,
@@ -108,9 +121,9 @@ CREATE TABLE "pemesanan" (
     "estimasi_total_harga" DECIMAL(12,2),
     "catatan" TEXT,
     "durasi_layanan" "DurasiLayanan" NOT NULL,
-    "metode_antar" TEXT,
+    "metode_antar" "MetodeAntar" NOT NULL,
     "waktu_antar" TIMESTAMP(3),
-    "metode_ambil" TEXT,
+    "metode_ambil" "MetodeAmbil" NOT NULL,
     "waktu_ambil" TIMESTAMP(3),
     "foto_penjemputan_url" TEXT,
     "foto_penjemputan_file_id" TEXT,
@@ -166,13 +179,22 @@ CREATE TABLE "ulasan" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "customer_email_customer_key" ON "customer"("email_customer");
+CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "admin_email_admin_key" ON "admin"("email_admin");
+CREATE UNIQUE INDEX "customer_id_user_key" ON "customer"("id_user");
+
+-- CreateIndex
+CREATE INDEX "customer_id_user_idx" ON "customer"("id_user");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "admin_id_user_key" ON "admin"("id_user");
 
 -- CreateIndex
 CREATE INDEX "admin_id_outlet_idx" ON "admin"("id_outlet");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "kurir_id_user_key" ON "kurir"("id_user");
 
 -- CreateIndex
 CREATE INDEX "kurir_id_outlet_idx" ON "kurir"("id_outlet");
@@ -205,7 +227,16 @@ CREATE UNIQUE INDEX "ulasan_id_pemesanan_key" ON "ulasan"("id_pemesanan");
 CREATE INDEX "ulasan_id_customer_idx" ON "ulasan"("id_customer");
 
 -- AddForeignKey
+ALTER TABLE "customer" ADD CONSTRAINT "customer_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "user"("id_user") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin" ADD CONSTRAINT "admin_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "user"("id_user") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "admin" ADD CONSTRAINT "admin_id_outlet_fkey" FOREIGN KEY ("id_outlet") REFERENCES "outlet"("id_outlet") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "kurir" ADD CONSTRAINT "kurir_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "user"("id_user") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "kurir" ADD CONSTRAINT "kurir_id_outlet_fkey" FOREIGN KEY ("id_outlet") REFERENCES "outlet"("id_outlet") ON DELETE RESTRICT ON UPDATE CASCADE;
