@@ -6,11 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum DurasiLayanan {
-  REGULER
-  EXPRESS
-}
-
 enum StatusPembayaran {
   PAID
   UNPAID
@@ -18,10 +13,27 @@ enum StatusPembayaran {
 }
 
 enum StatusPesanan {
+  DIBUAT
+  DITERIMA
   MENUNGGU
-  SEDANG_DIPROSES
+  DIPROSES
+  SIAP
   SELESAI
-  DIKIRIM
+  DIBATALKAN
+}
+
+enum StatusPengantaran {
+  MENUNGGU
+  DITUGASKAN
+  MENUJU_LOKASI
+  SAMPAI_LOKASI
+  SELESAI
+  DIBATALKAN
+}
+
+enum JenisPengantaran {
+  DIANTAR
+  DIJEMPUT
 }
 
 enum StatusKurir {
@@ -41,14 +53,9 @@ enum SatuanLayanan {
   PASANG
 }
 
-enum MetodeAntar {
-  DIANTAR_KURIR
-  DIBAWA_SENDIRI
-}
-
-enum MetodeAmbil {
-  DIAMBIL_KURIR
-  DIJEMPUT_SENDIRI
+enum SatuanDurasi {
+  JAM
+  HARI
 }
 
 enum Role {
@@ -57,23 +64,37 @@ enum Role {
   KURIR
 }
 
+enum MetodeAntar {
+  DIANTAR_SENDIRI
+  DIANTAR_KURIR
+}
+
+enum MetodeAmbil {
+  DIAMBIL_SENDIRI
+  DIJEMPUT_KURIR
+}
+
+enum HariOperasional {
+  SENIN
+  SELASA
+  RABU
+  KAMIS
+  JUMAT
+  SABTU
+  MINGGU
+}
+
 model User {
-  id_user String @id @default(uuid())
-
+  id_user       String   @id @default(uuid())
   nama          String
-  email         String @unique
+  email         String   @unique
   password_hash String
-
-  no_telepon String?
-
-  role Role
-
-  is_active Boolean @default(true)
-
-  last_login DateTime?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  no_telepon    String?
+  role          Role
+  is_active     Boolean  @default(true)
+  last_login    DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   customer Customer?
   admin    Admin?
@@ -83,187 +104,194 @@ model User {
 }
 
 model Customer {
-  id_customer String @id @default(uuid())
-  id_user     String @unique
+  id_customer     String   @id @default(uuid())
+  id_user         String   @unique
+  tanggal_lahir   DateTime?
+  tanggal_daftar  DateTime @default(now())
+  alamat          String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
-  tanggal_lahir  DateTime?
-  tanggal_daftar DateTime  @default(now())
-  alamat         String
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  user User @relation(fields: [id_user], references: [id_user])
-
-  pemesanan Pemesanan[]
-  ulasan    Ulasan[]
+  user       User         @relation(fields: [id_user], references: [id_user])
+  pemesanan  Pemesanan[]
+  ulasan     Ulasan[]
 
   @@index([id_user])
   @@map("customer")
 }
 
 model Outlet {
-  id_outlet String @id @default(uuid())
+  id_outlet             String   @id @default(uuid())
+  nama_outlet           String
+  alamat_outlet         String
+  nomor_telepon_outlet  String
+  jam_buka              String
+  jam_tutup             String
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
 
-  nama_outlet          String
-  alamat_outlet        String
-  nomor_telepon_outlet String
-  jam_buka             String
-  jam_tutup            String
+  admin      Admin[]
+  kurir      Kurir[]
+  pemesanan  Pemesanan[]
+  slot_operasional SlotOperasional[]
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  admin     Admin[]
-  kurir     Kurir[]
-  pemesanan Pemesanan[]
-
+  @@index([id_outlet])
   @@map("outlet")
 }
 
 model Admin {
-  id_admin String @id @default(uuid())
-
-  id_user   String @unique
-  id_outlet String
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id_admin    String   @id @default(uuid())
+  id_user     String   @unique
+  id_outlet   String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
   user   User   @relation(fields: [id_user], references: [id_user])
   outlet Outlet @relation(fields: [id_outlet], references: [id_outlet])
-
   @@index([id_outlet])
   @@map("admin")
 }
 
 model Kurir {
-  id_kurir String @id @default(uuid())
+  id_kurir          String   @id @default(uuid())
+  id_user           String   @unique
+  id_outlet         String
+  jenis_kendaraan   String
+  nomor_kendaraan   String
+  status_kurir      StatusKurir
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
-  id_user   String @unique
-  id_outlet String
-
-  jenis_kendaraan String
-  nomor_kendaraan String
-
-  status_kurir StatusKurir
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  user   User   @relation(fields: [id_user], references: [id_user])
-  outlet Outlet @relation(fields: [id_outlet], references: [id_outlet])
-
-  pemesanan Pemesanan[]
+  user          User           @relation(fields: [id_user], references: [id_user])
+  outlet        Outlet         @relation(fields: [id_outlet], references: [id_outlet])
+  pengantaran   Pengantaran[]
 
   @@index([id_outlet])
   @@map("kurir")
 }
 
 model Layanan {
-  id_layanan String @id @default(uuid())
+  id_layanan          String @id @default(uuid())
+  nama_layanan        String
+  kategori_layanan    KategoriLayanan
+  satuan              SatuanLayanan
+  harga               Decimal @db.Decimal(12, 2)
+  estimasi_durasi     Int
+  satuan_durasi       SatuanDurasi
 
-  nama_layanan     String
-  kategori_layanan KategoriLayanan
-  satuan           SatuanLayanan
-  harga            Decimal         @db.Decimal(12, 2)
+  is_active Boolean   @default(true)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-
-  pemesanan Pemesanan[]
+  detail_pemesanan DetailPemesanan[]
 
   @@map("layanan")
 }
 
 model Pemesanan {
-  id_pemesanan String @id @default(uuid())
+  id_pemesanan            String @id @default(uuid())
+  id_customer             String
+  id_outlet               String
+  tanggal_pesan           DateTime
+  status_terkini          StatusPesanan
+  estimasi_selesai        DateTime?
+  total_laundry           Decimal @db.Decimal(12,2)
+  total_pengantaran       Decimal @db.Decimal(12,2)
+  grand_total             Decimal @db.Decimal(12,2)
+  catatan                 String?
+  metode_antar            MetodeAntar
+  metode_jemput           MetodeAmbil
+  tanggal_antar_request   DateTime?
+  tanggal_jemput_request  DateTime?
 
-  id_customer String
-  id_outlet   String
-  id_layanan  String
-  id_kurir    String?
 
-  tanggal_pesan DateTime
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
 
-  jumlah      Int?
-  estimasi_kg Decimal? @db.Decimal(8, 2)
-
-  estimasi_harga_laundry Decimal? @db.Decimal(12, 2)
-  harga_pengantaran      Decimal? @db.Decimal(12, 2)
-  estimasi_total_harga   Decimal? @db.Decimal(12, 2)
-
-  catatan        String?
-  durasi_layanan DurasiLayanan
-
-  metode_antar MetodeAntar
-  waktu_antar  DateTime?
-
-  metode_ambil MetodeAmbil
-  waktu_ambil  DateTime?
-
-  foto_penjemputan_url     String?
-  foto_penjemputan_file_id String?
-  waktu_foto_penjemputan   DateTime?
-
-  foto_pengantaran_url     String?
-  foto_pengantaran_file_id String?
-  waktu_foto_pengantaran   DateTime?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  customer Customer @relation(fields: [id_customer], references: [id_customer])
-  outlet   Outlet   @relation(fields: [id_outlet], references: [id_outlet])
-  layanan  Layanan  @relation(fields: [id_layanan], references: [id_layanan])
-  kurir    Kurir?   @relation(fields: [id_kurir], references: [id_kurir])
-
-  transaksi       Transaksi?
-  ulasan          Ulasan?
-  riwayat_pesanan RiwayatPesanan[]
+  customer Customer       @relation(fields: [id_customer], references: [id_customer])
+  outlet Outlet           @relation(fields: [id_outlet], references: [id_outlet])
+  detail_pemesanan        DetailPemesanan[]
+  pengantaran             Pengantaran[]
+  transaksi               Transaksi?
+  ulasan                  Ulasan?
+  riwayat_pesanan         RiwayatPesanan[]
 
   @@index([id_customer])
   @@index([id_outlet])
-  @@index([id_layanan])
-  @@index([id_kurir])
+  @@index([status_terkini])
   @@map("pemesanan")
 }
 
-model Transaksi {
-  id_transaksi String @id @default(uuid())
-
-  id_pemesanan String @unique
-
-  tanggal_pembayaran DateTime
-
-  harga_laundry Decimal @db.Decimal(12, 2)
-  total_kg      Decimal @db.Decimal(8, 2)
-  total_harga   Decimal @db.Decimal(12, 2)
-
-  status_pembayaran StatusPembayaran
-
+model DetailPemesanan {
+  id_detail           String @id @default(uuid())
+  id_pemesanan        String
+  id_layanan          String
+  nama_layanan        String
+  kategori_layanan    KategoriLayanan
+  satuan              SatuanLayanan
+  harga_satuan        Decimal @db.Decimal(12,2)
+  estimasi_durasi     Int
+  satuan_durasi       SatuanDurasi
+  kuantitas           Decimal @db.Decimal(8,2)
+  subtotal            Decimal @db.Decimal(12,2)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  pemesanan Pemesanan @relation(fields: [id_pemesanan], references: [id_pemesanan])
+  pemesanan Pemesanan     @relation(fields: [id_pemesanan], references: [id_pemesanan])
+  layanan Layanan         @relation(fields: [id_layanan], references: [id_layanan])
+  @@index([id_pemesanan])
+  @@index([id_layanan])
+  @@map("detail_pemesanan")
+}
 
+model Pengantaran {
+  id_pengantaran          String @id @default(uuid())
+  id_pemesanan            String
+  id_slot_operasional     String
+  id_kurir                String?
+  tanggal_pengantaran     DateTime
+  status_pengantaran      StatusPengantaran
+  ongkir                  Decimal @db.Decimal(12,2)
+  waktu_mulai             DateTime?
+  waktu_selesai           DateTime?
+  bukti_foto              String?
+  catatan                 String?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+  pemesanan Pemesanan     @relation(fields: [id_pemesanan], references: [id_pemesanan])
+  slot SlotOperasional    @relation(fields: [id_slot_operasional], references: [id_slot])
+  kurir Kurir?            @relation(fields: [id_kurir], references: [id_kurir])
+
+  @@index([id_pemesanan])
+  @@index([id_slot_operasional])
+  @@index([id_kurir])
+  @@map("pengantaran")
+}
+
+model Transaksi {
+  id_transaksi        String @id @default(uuid())
+  id_pemesanan        String @unique
+  tanggal_pembayaran  DateTime
+  nominal_pembayaran  Decimal @db.Decimal(12,2)
+  status_pembayaran   StatusPembayaran
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  pemesanan Pemesanan @relation(fields: [id_pemesanan], references: [id_pemesanan])
   riwayat_pesanan RiwayatPesanan[]
 
   @@map("transaksi")
 }
 
 model RiwayatPesanan {
-  id_history String @id @default(uuid())
+  id_history      String @id @default(uuid())
+  id_pemesanan    String
+  id_transaksi    String?
+  status_pesanan  StatusPesanan
+  waktu_update    DateTime
+  created_at      DateTime @default(now())
 
-  id_pemesanan String
-  id_transaksi String?
-
-  status_pesanan StatusPesanan
-  waktu_update   DateTime
-
-  created_at DateTime @default(now())
-
-  pemesanan Pemesanan  @relation(fields: [id_pemesanan], references: [id_pemesanan])
+  pemesanan Pemesanan @relation(fields: [id_pemesanan], references: [id_pemesanan])
   transaksi Transaksi? @relation(fields: [id_transaksi], references: [id_transaksi])
 
   @@index([id_pemesanan])
@@ -271,21 +299,34 @@ model RiwayatPesanan {
   @@map("riwayat_pesanan")
 }
 
-model Ulasan {
-  id_ulasan String @id @default(uuid())
-
-  id_customer  String
-  id_pemesanan String @unique
-
-  rating Int
-  komen  String
-
-  tanggal_ulasan DateTime
-
+model SlotOperasional {
+  id_slot           String  @id @default(uuid())
+  id_outlet         String
+  jenis_pengantaran JenisPengantaran
+  hari              HariOperasional
+  jam_mulai         String
+  jam_selesai       String
+  is_active Boolean @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  customer  Customer  @relation(fields: [id_customer], references: [id_customer])
+  outlet Outlet       @relation(fields: [id_outlet], references: [id_outlet])
+  pengantaran Pengantaran[]
+  @@index([id_outlet])
+  @@map("slot_operasional")
+}
+
+model Ulasan {
+  id_ulasan       String @id @default(uuid())
+  id_customer     String
+  id_pemesanan    String @unique
+  rating          Int
+  komen           String
+  tanggal_ulasan  DateTime
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  customer Customer @relation(fields: [id_customer], references: [id_customer])
   pemesanan Pemesanan @relation(fields: [id_pemesanan], references: [id_pemesanan])
 
   @@index([id_customer])

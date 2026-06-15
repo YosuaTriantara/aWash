@@ -1,11 +1,14 @@
 -- CreateEnum
-CREATE TYPE "DurasiLayanan" AS ENUM ('REGULER', 'EXPRESS');
-
--- CreateEnum
 CREATE TYPE "StatusPembayaran" AS ENUM ('PAID', 'UNPAID', 'PENDING');
 
 -- CreateEnum
-CREATE TYPE "StatusPesanan" AS ENUM ('MENUNGGU', 'SEDANG_DIPROSES', 'SELESAI', 'DIKIRIM');
+CREATE TYPE "StatusPesanan" AS ENUM ('DIBUAT', 'DITERIMA', 'MENUNGGU', 'DIPROSES', 'SIAP', 'SELESAI', 'DIBATALKAN');
+
+-- CreateEnum
+CREATE TYPE "StatusPengantaran" AS ENUM ('MENUNGGU', 'DITUGASKAN', 'MENUJU_LOKASI', 'SAMPAI_LOKASI', 'SELESAI', 'DIBATALKAN');
+
+-- CreateEnum
+CREATE TYPE "JenisPengantaran" AS ENUM ('DIANTAR', 'DIJEMPUT');
 
 -- CreateEnum
 CREATE TYPE "StatusKurir" AS ENUM ('AKTIF', 'TIDAK_AKTIF');
@@ -17,13 +20,19 @@ CREATE TYPE "KategoriLayanan" AS ENUM ('CUCI_KILOAN', 'DRY_CLEAN', 'CUCI_SEPATU'
 CREATE TYPE "SatuanLayanan" AS ENUM ('KG', 'PCS', 'PASANG');
 
 -- CreateEnum
-CREATE TYPE "MetodeAntar" AS ENUM ('DIANTAR_KURIR', 'DIBAWA_SENDIRI');
-
--- CreateEnum
-CREATE TYPE "MetodeAmbil" AS ENUM ('DIAMBIL_KURIR', 'DIJEMPUT_SENDIRI');
+CREATE TYPE "SatuanDurasi" AS ENUM ('JAM', 'HARI');
 
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('CUSTOMER', 'ADMIN', 'KURIR');
+
+-- CreateEnum
+CREATE TYPE "MetodeAntar" AS ENUM ('DIANTAR_SENDIRI', 'DIANTAR_KURIR');
+
+-- CreateEnum
+CREATE TYPE "MetodeAmbil" AS ENUM ('DIAMBIL_SENDIRI', 'DIJEMPUT_KURIR');
+
+-- CreateEnum
+CREATE TYPE "HariOperasional" AS ENUM ('SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU');
 
 -- CreateTable
 CREATE TABLE "user" (
@@ -100,6 +109,9 @@ CREATE TABLE "layanan" (
     "kategori_layanan" "KategoriLayanan" NOT NULL,
     "satuan" "SatuanLayanan" NOT NULL,
     "harga" DECIMAL(12,2) NOT NULL,
+    "estimasi_durasi" INTEGER NOT NULL,
+    "satuan_durasi" "SatuanDurasi" NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -111,26 +123,17 @@ CREATE TABLE "pemesanan" (
     "id_pemesanan" TEXT NOT NULL,
     "id_customer" TEXT NOT NULL,
     "id_outlet" TEXT NOT NULL,
-    "id_layanan" TEXT NOT NULL,
-    "id_kurir" TEXT,
     "tanggal_pesan" TIMESTAMP(3) NOT NULL,
-    "jumlah" INTEGER,
-    "estimasi_kg" DECIMAL(8,2),
-    "estimasi_harga_laundry" DECIMAL(12,2),
-    "harga_pengantaran" DECIMAL(12,2),
-    "estimasi_total_harga" DECIMAL(12,2),
+    "status_terkini" "StatusPesanan" NOT NULL,
+    "estimasi_selesai" TIMESTAMP(3),
+    "total_laundry" DECIMAL(12,2) NOT NULL,
+    "total_pengantaran" DECIMAL(12,2) NOT NULL,
+    "grand_total" DECIMAL(12,2) NOT NULL,
     "catatan" TEXT,
-    "durasi_layanan" "DurasiLayanan" NOT NULL,
     "metode_antar" "MetodeAntar" NOT NULL,
-    "waktu_antar" TIMESTAMP(3),
-    "metode_ambil" "MetodeAmbil" NOT NULL,
-    "waktu_ambil" TIMESTAMP(3),
-    "foto_penjemputan_url" TEXT,
-    "foto_penjemputan_file_id" TEXT,
-    "waktu_foto_penjemputan" TIMESTAMP(3),
-    "foto_pengantaran_url" TEXT,
-    "foto_pengantaran_file_id" TEXT,
-    "waktu_foto_pengantaran" TIMESTAMP(3),
+    "metode_jemput" "MetodeAmbil" NOT NULL,
+    "tanggal_antar_request" TIMESTAMP(3),
+    "tanggal_jemput_request" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -138,13 +141,49 @@ CREATE TABLE "pemesanan" (
 );
 
 -- CreateTable
+CREATE TABLE "detail_pemesanan" (
+    "id_detail" TEXT NOT NULL,
+    "id_pemesanan" TEXT NOT NULL,
+    "id_layanan" TEXT NOT NULL,
+    "nama_layanan" TEXT NOT NULL,
+    "kategori_layanan" "KategoriLayanan" NOT NULL,
+    "satuan" "SatuanLayanan" NOT NULL,
+    "harga_satuan" DECIMAL(12,2) NOT NULL,
+    "estimasi_durasi" INTEGER NOT NULL,
+    "satuan_durasi" "SatuanDurasi" NOT NULL,
+    "kuantitas" DECIMAL(8,2) NOT NULL,
+    "subtotal" DECIMAL(12,2) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "detail_pemesanan_pkey" PRIMARY KEY ("id_detail")
+);
+
+-- CreateTable
+CREATE TABLE "pengantaran" (
+    "id_pengantaran" TEXT NOT NULL,
+    "id_pemesanan" TEXT NOT NULL,
+    "id_slot_operasional" TEXT NOT NULL,
+    "id_kurir" TEXT,
+    "tanggal_pengantaran" TIMESTAMP(3) NOT NULL,
+    "status_pengantaran" "StatusPengantaran" NOT NULL,
+    "ongkir" DECIMAL(12,2) NOT NULL,
+    "waktu_mulai" TIMESTAMP(3),
+    "waktu_selesai" TIMESTAMP(3),
+    "bukti_foto" TEXT,
+    "catatan" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "pengantaran_pkey" PRIMARY KEY ("id_pengantaran")
+);
+
+-- CreateTable
 CREATE TABLE "transaksi" (
     "id_transaksi" TEXT NOT NULL,
     "id_pemesanan" TEXT NOT NULL,
     "tanggal_pembayaran" TIMESTAMP(3) NOT NULL,
-    "harga_laundry" DECIMAL(12,2) NOT NULL,
-    "total_kg" DECIMAL(8,2) NOT NULL,
-    "total_harga" DECIMAL(12,2) NOT NULL,
+    "nominal_pembayaran" DECIMAL(12,2) NOT NULL,
     "status_pembayaran" "StatusPembayaran" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -162,6 +201,21 @@ CREATE TABLE "riwayat_pesanan" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "riwayat_pesanan_pkey" PRIMARY KEY ("id_history")
+);
+
+-- CreateTable
+CREATE TABLE "slot_operasional" (
+    "id_slot" TEXT NOT NULL,
+    "id_outlet" TEXT NOT NULL,
+    "jenis_pengantaran" "JenisPengantaran" NOT NULL,
+    "hari" "HariOperasional" NOT NULL,
+    "jam_mulai" TEXT NOT NULL,
+    "jam_selesai" TEXT NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "slot_operasional_pkey" PRIMARY KEY ("id_slot")
 );
 
 -- CreateTable
@@ -188,6 +242,9 @@ CREATE UNIQUE INDEX "customer_id_user_key" ON "customer"("id_user");
 CREATE INDEX "customer_id_user_idx" ON "customer"("id_user");
 
 -- CreateIndex
+CREATE INDEX "outlet_id_outlet_idx" ON "outlet"("id_outlet");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "admin_id_user_key" ON "admin"("id_user");
 
 -- CreateIndex
@@ -206,10 +263,22 @@ CREATE INDEX "pemesanan_id_customer_idx" ON "pemesanan"("id_customer");
 CREATE INDEX "pemesanan_id_outlet_idx" ON "pemesanan"("id_outlet");
 
 -- CreateIndex
-CREATE INDEX "pemesanan_id_layanan_idx" ON "pemesanan"("id_layanan");
+CREATE INDEX "pemesanan_status_terkini_idx" ON "pemesanan"("status_terkini");
 
 -- CreateIndex
-CREATE INDEX "pemesanan_id_kurir_idx" ON "pemesanan"("id_kurir");
+CREATE INDEX "detail_pemesanan_id_pemesanan_idx" ON "detail_pemesanan"("id_pemesanan");
+
+-- CreateIndex
+CREATE INDEX "detail_pemesanan_id_layanan_idx" ON "detail_pemesanan"("id_layanan");
+
+-- CreateIndex
+CREATE INDEX "pengantaran_id_pemesanan_idx" ON "pengantaran"("id_pemesanan");
+
+-- CreateIndex
+CREATE INDEX "pengantaran_id_slot_operasional_idx" ON "pengantaran"("id_slot_operasional");
+
+-- CreateIndex
+CREATE INDEX "pengantaran_id_kurir_idx" ON "pengantaran"("id_kurir");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "transaksi_id_pemesanan_key" ON "transaksi"("id_pemesanan");
@@ -219,6 +288,9 @@ CREATE INDEX "riwayat_pesanan_id_pemesanan_idx" ON "riwayat_pesanan"("id_pemesan
 
 -- CreateIndex
 CREATE INDEX "riwayat_pesanan_id_transaksi_idx" ON "riwayat_pesanan"("id_transaksi");
+
+-- CreateIndex
+CREATE INDEX "slot_operasional_id_outlet_idx" ON "slot_operasional"("id_outlet");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ulasan_id_pemesanan_key" ON "ulasan"("id_pemesanan");
@@ -248,10 +320,19 @@ ALTER TABLE "pemesanan" ADD CONSTRAINT "pemesanan_id_customer_fkey" FOREIGN KEY 
 ALTER TABLE "pemesanan" ADD CONSTRAINT "pemesanan_id_outlet_fkey" FOREIGN KEY ("id_outlet") REFERENCES "outlet"("id_outlet") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "pemesanan" ADD CONSTRAINT "pemesanan_id_layanan_fkey" FOREIGN KEY ("id_layanan") REFERENCES "layanan"("id_layanan") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "detail_pemesanan" ADD CONSTRAINT "detail_pemesanan_id_pemesanan_fkey" FOREIGN KEY ("id_pemesanan") REFERENCES "pemesanan"("id_pemesanan") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "pemesanan" ADD CONSTRAINT "pemesanan_id_kurir_fkey" FOREIGN KEY ("id_kurir") REFERENCES "kurir"("id_kurir") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "detail_pemesanan" ADD CONSTRAINT "detail_pemesanan_id_layanan_fkey" FOREIGN KEY ("id_layanan") REFERENCES "layanan"("id_layanan") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "pengantaran" ADD CONSTRAINT "pengantaran_id_pemesanan_fkey" FOREIGN KEY ("id_pemesanan") REFERENCES "pemesanan"("id_pemesanan") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "pengantaran" ADD CONSTRAINT "pengantaran_id_slot_operasional_fkey" FOREIGN KEY ("id_slot_operasional") REFERENCES "slot_operasional"("id_slot") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "pengantaran" ADD CONSTRAINT "pengantaran_id_kurir_fkey" FOREIGN KEY ("id_kurir") REFERENCES "kurir"("id_kurir") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "transaksi" ADD CONSTRAINT "transaksi_id_pemesanan_fkey" FOREIGN KEY ("id_pemesanan") REFERENCES "pemesanan"("id_pemesanan") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -261,6 +342,9 @@ ALTER TABLE "riwayat_pesanan" ADD CONSTRAINT "riwayat_pesanan_id_pemesanan_fkey"
 
 -- AddForeignKey
 ALTER TABLE "riwayat_pesanan" ADD CONSTRAINT "riwayat_pesanan_id_transaksi_fkey" FOREIGN KEY ("id_transaksi") REFERENCES "transaksi"("id_transaksi") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "slot_operasional" ADD CONSTRAINT "slot_operasional_id_outlet_fkey" FOREIGN KEY ("id_outlet") REFERENCES "outlet"("id_outlet") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ulasan" ADD CONSTRAINT "ulasan_id_customer_fkey" FOREIGN KEY ("id_customer") REFERENCES "customer"("id_customer") ON DELETE RESTRICT ON UPDATE CASCADE;

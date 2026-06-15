@@ -16,6 +16,9 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "bugs": {
     "url": "https://github.com/YosuaTriantara/aWash/issues"
   },
