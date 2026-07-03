@@ -1,29 +1,7 @@
-import WelcomeBanner from "./components/WelcomeBanner";
-import StatsCards from "./components/StatsCards";
-import ActiveOrder from "./components/ActiveOrder";
-import CourierInfo from "./components/CourierInfo";
-import QuickService from "./components/QuickService";
-import HistoryTable from "./components/HistoryTable";
-
-export default function DashboardPage() {
+export default function Dashboard() {
   return (
-    <div className="space-y-6">
-      <WelcomeBanner />
-
-      <StatsCards />
-
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
-          <ActiveOrder />
-        </div>
-
-        <div className="space-y-6">
-          <CourierInfo />
-          <QuickService />
-        </div>
-      </div>
-
-      <HistoryTable />
+    <div className="bg-red-500 text-white p-10 text-3xl">
+      TEST TAILWIND
     </div>
   );
 }
