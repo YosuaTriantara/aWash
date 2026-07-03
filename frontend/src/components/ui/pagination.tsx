@@ -8,7 +8,7 @@ export default function StatusBadge({
   status,
 }: StatusBadgeProps) {
 
-  const normalized = status.toUpperCase();
+  const normalized = status?.toUpperCase() ?? '';
 
   const styles = {
     MENUNGGU: 'bg-yellow-100 text-yellow-700',

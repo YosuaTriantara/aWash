@@ -1,43 +1,48 @@
 'use client';
 
-import SearchBar from '@/components/common/searchBar';
-import { useAuthStore } from '@/store/auth.store';
-import { ROLE_LABEL } from '@/constants/roles';
 import Avatar from '@/components/ui/avatar';
+import SearchBar from '@/components/common/searchBar';
 
-export default function Header() {
-  const { user } = useAuthStore();
+interface HeaderProps {
+  userName: string;
+  roleLabel: string;
+  search?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
+}
 
+export default function Header({
+  userName,
+  roleLabel,
+  search,
+  onSearchChange,
+  searchPlaceholder = 'Cari...',
+}: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between">
 
-      {/* Search */}
-
       <div className="w-full max-w-md">
-        <SearchBar placeholder="Cari pesanan, pelanggan..." />
+        {search !== undefined && onSearchChange && (
+          <SearchBar
+            value={search}
+            onChange={onSearchChange}
+            placeholder={searchPlaceholder}
+          />
+        )}
       </div>
 
-      {/* User */}
-
-      <div className="flex items-center gap-3">
-
+      <div className="flex items-center gap-4">
         <div className="text-right">
-
-          <p className="text-sm font-semibold text-gray-900">
-            {user?.nama}
+          <p className="font-semibold text-gray-800">
+            {userName}
           </p>
 
-          <p className="text-xs text-gray-500">
-            {ROLE_LABEL[user?.role as keyof typeof ROLE_LABEL]}
+          <p className="text-sm text-gray-500">
+            {roleLabel}
           </p>
-
         </div>
 
-        <Avatar
-          name={user?.nama}
-          size="md"
-        />
-
+        <Avatar name={userName} />
       </div>
 
     </header>

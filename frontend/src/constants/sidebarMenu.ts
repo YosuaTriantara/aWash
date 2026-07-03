@@ -39,3 +39,39 @@ export const adminMenu = [
     icon: User,
   },
 ];
+
+export const customerMenu = [
+  {
+    title: "AAA",
+    href: "/customer",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "bbb",
+    href: "/customer/bbb",
+    icon: ClipboardList,
+  },
+  {
+    title: "ccc",
+    href: "/customer/ccc",
+    icon: Truck,
+  }
+];
+
+export const kurirMenu = [
+  {
+    title: "AAA",
+    href: "/kurir",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "bbb",
+    href: "/kurir/bbb",
+    icon: ClipboardList,
+  },
+  {
+    title: "ccc",
+    href: "/kurir/ccc",
+    icon: Truck,
+  }
+];
