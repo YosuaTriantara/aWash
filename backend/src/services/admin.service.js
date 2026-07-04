@@ -75,7 +75,7 @@ const updateOutlet = async (id_user, data) => {
 
 // ─── Kurir ────────────────────────────────────────────────────────────────────
 
-const getKurirList = async (id_user, { page = 1, limit = 10 }) => {
+const getKurirList = async (id_user, { page = 1, limit = 10, status }) => {
   const { id_outlet } = await getAdminData(id_user);
   const skip = (page - 1) * limit;
 
