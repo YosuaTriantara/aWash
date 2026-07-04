@@ -32,13 +32,18 @@ const createPemesanan = async (id_user, data) => {
   });
   if (!outlet) throw new Error("Outlet tidak ditemukan");
 
-  // 3. Validasi semua layanan aktif
-  const layananIds = data.items.map((item) => item.id_layanan);
-  const layananList = await prisma.layanan.findMany({
-    where: { id_layanan: { in: layananIds }, is_active: true },
+// 3. Validasi layanan
+  const item = data.items[0];
+
+  const layanan = await prisma.layanan.findFirst({
+    where: {
+      id_layanan: item.id_layanan,
+      is_active: true,
+    },
   });
-  if (layananList.length !== data.items.length) {
-    throw new Error("Satu atau lebih layanan tidak valid");
+
+  if (!layanan) {
+    throw new Error("Layanan tidak ditemukan");
   }
 
   // 4. Validasi slot operasional jika DIANTAR_KURIR
@@ -58,34 +63,30 @@ const createPemesanan = async (id_user, data) => {
   }
 
   // 5. Hitung detail tiap item
-  const layananMap = {};
-  for (const l of layananList) layananMap[l.id_layanan] = l;
+  const subtotal =
+    parseFloat(layanan.harga) * item.kuantitas;
 
-  const detailItems = data.items.map((item) => {
-    const layanan = layananMap[item.id_layanan];
-    const subtotal = parseFloat(layanan.harga) * item.kuantitas;
-    return {
-      id_layanan: layanan.id_layanan,
-      nama_layanan: layanan.nama_layanan,
-      kategori_layanan: layanan.kategori_layanan,
-      satuan: layanan.satuan,
-      harga_satuan: layanan.harga,
-      estimasi_durasi: layanan.estimasi_durasi,
-      satuan_durasi: layanan.satuan_durasi,
-      kuantitas: item.kuantitas,
-      subtotal,
-    };
-  });
+  const detailItem = {
+    id_layanan: layanan.id_layanan,
+    nama_layanan: layanan.nama_layanan,
+    kategori_layanan: layanan.kategori_layanan,
+    satuan: layanan.satuan,
+    harga_satuan: layanan.harga,
+    estimasi_durasi: layanan.estimasi_durasi,
+    satuan_durasi: layanan.satuan_durasi,
+    kuantitas: item.kuantitas,
+    subtotal,
+  };
 
   // 6. Hitung total biaya
-  const total_laundry = detailItems.reduce((sum, d) => sum + d.subtotal, 0);
-  const total_pengantaran = 0;
-  const grand_total = total_laundry;
+  const total_laundry = detailItem.subtotal;
+  const total_pengantaran = 0; // ongkir default 0 saat order dibuat
+  const grand_total = total_laundry + total_pengantaran;
 
   // 7. Estimasi selesai berdasarkan layanan terlama
   const estimasi_selesai = hitungEstimasiSelesai(
     new Date(data.tanggal_antar_request),
-    layananList,
+    [layanan],
   );
 
   // 8. Buat semua record dalam satu transaksi
@@ -112,12 +113,21 @@ const createPemesanan = async (id_user, data) => {
       },
     });
 
-    await tx.detailPemesanan.createMany({
-      data: detailItems.map((d) => ({
+    await tx.detailPemesanan.create({
+      data: {
         id_pemesanan: created.id_pemesanan,
-        ...d,
-      })),
+        ...detailItem,
+      },
     });
+
+  await tx.transaksi.create({
+    data: {
+      id_pemesanan: created.id_pemesanan,
+      tanggal_pembayaran: new Date(),
+      nominal_pembayaran: grand_total,
+      status_pembayaran: "UNPAID",
+    },
+  });
 
     if (data.metode_antar === "DIANTAR_KURIR") {
       await tx.pengantaran.create({

@@ -309,7 +309,12 @@ const getPemesananList = async (
   const skip = (page - 1) * limit;
 
   const where = { id_outlet };
-  if (status) where.status_terkini = status;
+  if (status) {
+  const statusList = status.split(',');
+  where.status_terkini = statusList.length > 1
+    ? { in: statusList }
+    : statusList[0];
+}
   if (tanggal_mulai || tanggal_akhir) {
     where.tanggal_pesan = {};
     if (tanggal_mulai) where.tanggal_pesan.gte = new Date(tanggal_mulai);
@@ -323,7 +328,11 @@ const getPemesananList = async (
         customer: {
           include: { user: { select: { nama: true, no_telepon: true } } },
         },
-        detail_pemesanan: true,
+        detail_pemesanan: {
+          include: {
+            layanan: true,
+          },
+        },
         pengantaran: {
           include: {
             kurir: { include: { user: { select: { nama: true } } } },
@@ -353,7 +362,11 @@ const getPemesananById = async (id_user, id_pemesanan) => {
           user: { select: { nama: true, email: true, no_telepon: true } },
         },
       },
-      detail_pemesanan: true,
+      detail_pemesanan: {
+        include: {
+          layanan: true,
+        },
+      },
       pengantaran: {
         include: {
           slot: true,
@@ -373,55 +386,79 @@ const getPemesananById = async (id_user, id_pemesanan) => {
 
 const verifikasiPesanan = async (id_user, id_pemesanan, data) => {
   const { id_outlet } = await getAdminData(id_user);
+
   const pemesanan = await prisma.pemesanan.findFirst({
     where: { id_pemesanan, id_outlet },
     include: { detail_pemesanan: true },
   });
+
   if (!pemesanan) throw new Error("Pemesanan tidak ditemukan");
+
   if (pemesanan.status_terkini !== "DIBUAT") {
-    throw new Error(
-      "Hanya pesanan dengan status DIBUAT yang dapat diverifikasi",
-    );
+    throw new Error("Hanya pesanan DIBUAT yang dapat diverifikasi");
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    for (const item of data.items) {
-      const detail = pemesanan.detail_pemesanan.find(
-        (d) => d.id_detail === item.id_detail,
+  if (!pemesanan.detail_pemesanan.length) {
+    throw new Error("Detail pesanan tidak ditemukan");
+  }
+
+  // data.items = [{ id_detail, kuantitas }, ...] — divalidasi oleh verifikasiPesananSchema
+  const detailMap = new Map(
+    pemesanan.detail_pemesanan.map((d) => [d.id_detail, d]),
+  );
+
+  const updates = data.items.map((item) => {
+    const detail = detailMap.get(item.id_detail);
+
+    if (!detail) {
+      throw new Error(
+        `Detail pesanan ${item.id_detail} tidak ditemukan pada pesanan ini`,
       );
-      if (!detail)
-        throw new Error(`Detail pesanan ${item.id_detail} tidak ditemukan`);
-      const subtotal = Number(detail.harga_satuan) * Number(item.kuantitas);
+    }
+
+    const kuantitasAktual = Number(item.kuantitas);
+    const subtotal = Number(detail.harga_satuan) * kuantitasAktual;
+
+    return { id_detail: detail.id_detail, kuantitasAktual, subtotal };
+  });
+
+  const result = await prisma.$transaction(async (tx) => {
+
+    // update tiap detail yang divalidasi
+    for (const u of updates) {
       await tx.detailPemesanan.update({
-        where: { id_detail: item.id_detail },
-        data: { kuantitas: item.kuantitas, subtotal },
+        where: { id_detail: u.id_detail },
+        data: {
+          kuantitas: u.kuantitasAktual,
+          subtotal: u.subtotal,
+        },
       });
     }
 
-    const updatedDetails = await tx.detailPemesanan.findMany({
-      where: { id_pemesanan },
-    });
-    const total_laundry = updatedDetails.reduce(
-      (sum, d) => sum + Number(d.subtotal),
-      0,
-    );
-    const grand_total = total_laundry + Number(pemesanan.total_pengantaran);
+    const total_laundry = updates.reduce((sum, u) => sum + u.subtotal, 0);
+    const grand_total =
+      total_laundry + Number(pemesanan.total_pengantaran);
 
-    const updatedPemesanan = await tx.pemesanan.update({
+    // update pemesanan
+    const updated = await tx.pemesanan.update({
       where: { id_pemesanan },
-      data: { total_laundry, grand_total, status_terkini: "DITERIMA" },
+      data: {
+        total_laundry,
+        grand_total,
+        status_terkini: "MENUNGGU",
+      },
     });
 
+    // riwayat
     await tx.riwayatPesanan.create({
       data: {
-        id_history: randomUUID(),
         id_pemesanan,
-        status_pesanan: "DITERIMA",
+        status_pesanan: "MENUNGGU",
         waktu_update: new Date(),
       },
     });
 
-    return updatedPemesanan;
+    return updated;
   });
 
   return result;

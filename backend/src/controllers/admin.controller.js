@@ -226,8 +226,9 @@ const verifikasiPesanan = async (req, res) => {
     const result = await adminService.verifikasiPesanan(
       req.user.id_user,
       req.params.id_pemesanan,
-      req.body,
+      req.body
     );
+
     return successResponse(res, result, "Pesanan berhasil diverifikasi");
   } catch (error) {
     return errorResponse(res, error.message, 400);
