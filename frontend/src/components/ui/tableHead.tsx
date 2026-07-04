@@ -1,12 +1,14 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 interface TableHeadProps {
   children: ReactNode;
 }
 
-export default function TableHead({ children }: TableHeadProps) {
+export default function TableHead({
+  children,
+}: TableHeadProps) {
   return (
-    <thead className="bg-gray-50">
+    <thead className="border-b border-gray-100 bg-white">
       {children}
     </thead>
   );

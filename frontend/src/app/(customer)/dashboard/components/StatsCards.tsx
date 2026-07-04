@@ -1,25 +1,45 @@
 import Card from "@/components/ui/card";
+import { Package } from "lucide-react";
 
-interface StatCardProps {
+interface Props {
   title: string;
   value: string;
 }
 
-function StatCard({ title, value }: StatCardProps) {
+function StatCard({ title, value }: Props) {
   return (
     <Card className="p-6">
-      <p className="text-sm text-gray-500">{title}</p>
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center">
+          <Package className="text-blue-600" />
+        </div>
 
-      <h2 className="text-2xl font-bold mt-2">
-        {value}
-      </h2>
+        <div>
+          <p className="text-gray-500 text-sm">
+            {title}
+          </p>
+
+          <h2 className="text-4xl font-bold mt-1">
+            {value}
+          </h2>
+        </div>
+      </div>
     </Card>
   );
 }
 
-export default function StatsCards() {
+interface StatsCardsProps {
+    orders: any[];
+  }
+
+  export default function StatsCards({
+    orders,
+  }: StatsCardsProps) {
+
+    console.log(orders);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-3 gap-6">
       <StatCard
         title="Total Pesanan"
         value="12"

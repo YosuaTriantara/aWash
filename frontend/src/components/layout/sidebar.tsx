@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WashingMachine } from "lucide-react";
-import { adminMenu, customerMenu, kurirMenu } from "@/constants/sidebarMenu";
+import { WashingMachine, CircleHelp } from "lucide-react";
+import {
+  adminMenu,
+  customerMenu,
+  kurirMenu,
+} from "@/constants/sidebarMenu";
 
 type Role = "ADMIN" | "CUSTOMER" | "KURIR";
 
@@ -11,8 +15,9 @@ interface SidebarProps {
   role: Role;
 }
 
-export default function Sidebar({ role }: SidebarProps) {
-
+export default function Sidebar({
+  role,
+}: SidebarProps) {
   const pathname = usePathname();
 
   const menu =
@@ -23,28 +28,25 @@ export default function Sidebar({ role }: SidebarProps) {
       : kurirMenu;
 
   return (
-    <aside className="fixed left-0 top-0 w-64 min-h-screen bg-[#163B72] text-white flex flex-col">
+    <aside className="fixed left-0 top-0 flex h-screen w-60 flex-col border-r border-gray-200 bg-white">
 
       {/* Logo */}
-      <div className="px-6 py-8 border-b border-white/10">
+      <div className="px-10 pt-8">
 
         <div className="flex items-center gap-3">
 
-          <div className="w-10 h-10 rounded-xl bg-[#2E7CF6] flex items-center justify-center">
-            <WashingMachine size={20} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1565D8]">
+            <WashingMachine className="h-5 w-5 text-white" />
           </div>
 
           <div>
-            <h1 className="font-bold text-xl">aWash</h1>
+            <h1 className="text-3xl font-bold text-[#1565D8]">
+              aWash
+            </h1>
 
-            <p className="text-xs text-white/60">
-              {role === "ADMIN"
-                ? "Admin Operasional"
-                : role === "CUSTOMER"
-                ? "Customer"
-                : "Kurir"}
+            <p className="text-sm text-slate-500">
+              Renewed Clarity
             </p>
-
           </div>
 
         </div>
@@ -52,42 +54,51 @@ export default function Sidebar({ role }: SidebarProps) {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="mt-14 flex-1 px-5">
 
-        {menu.map((item) => {
+        <div className="space-y-2">
 
-          const Icon = item.icon;
-          const active = pathname === item.href;
+          {menu.map((item) => {
+            const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 transition
-                ${active
-                  ? "bg-[#2E7CF6] text-white"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
+            const active =
+              pathname === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-all
+                ${
+                  active
+                    ? "bg-[#EAF2FF] text-[#1565D8]"
+                    : "text-slate-700 hover:bg-slate-100"
                 }`}
-            >
-              <Icon size={20} />
-              <span>{item.title}</span>
-            </Link>
-          );
-        })}
+              >
+                <Icon size={20} />
+
+                {item.title}
+              </Link>
+            );
+          })}
+
+        </div>
 
       </nav>
 
-      {/* Footer */}
-      <div className="border-t border-white/10 p-5">
-        <div className="rounded-xl bg-white/5 p-4">
-          <p className="font-medium">
-            {role}
-          </p>
+      {/* Help */}
+      <div className="px-5 pb-8">
 
-          <p className="text-xs text-white/60 mt-1">
-            Kelola sistem sesuai role Anda.
-          </p>
-        </div>
+        <button className="flex items-center gap-3 text-slate-600 hover:text-[#1565D8] transition">
+
+          <CircleHelp size={20} />
+
+          <span className="font-medium">
+            Help
+          </span>
+
+        </button>
+
       </div>
 
     </aside>

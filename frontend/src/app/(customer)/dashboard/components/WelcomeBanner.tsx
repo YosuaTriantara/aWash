@@ -1,27 +1,36 @@
+"use client";
+
 import Card from "@/components/ui/card";
 import Button from "@/components/ui/button";
-
+import { Truck } from "lucide-react";
+import { useAuthStore } from "@/store/auth.store"; // sesuaikan path
 export default function WelcomeBanner() {
+  const { user } = useAuthStore();
+
   return (
-    <Card className="bg-[#1565D8] text-white border-0 p-8">
-      <div className="flex items-center justify-between">
-        <div className="max-w-lg">
-          <h1 className="text-3xl font-bold mb-3">
-            Selamat Datang 👋
+    <Card className="relative overflow-hidden rounded-3xl border-0 !bg-[#1565D8]">
+      <div className="relative flex min-h-[220px] items-center justify-between px-10 py-10">
+        <div className="max-w-2xl">
+          <h1 className="text-5xl font-bold text-white">
+            Selamat Datang, {user?.nama ?? "Customer"}!
           </h1>
 
-          <p className="text-blue-100 mb-6">
-            Kelola laundry Anda dengan mudah. Pantau status pesanan,
-            lakukan pemesanan baru, dan lihat riwayat transaksi di satu tempat.
+          <p className="mt-5 max-w-xl text-lg leading-8 text-blue-100">
+            Pakaian Anda sedang kami tangani. Nikmati kesegaran kain seperti baru
+            setiap saat bersama <span className="font-semibold">aWash.</span>
           </p>
 
-          <Button>
-            Buat Pesanan
+          <Button
+            className="mt-8 !bg-white !text-[#1565D8] hover:!bg-gray-100"
+          >
+            <Truck size={18} />
+            Mulai Pesanan
           </Button>
         </div>
 
-        <div className="hidden lg:flex items-center justify-center w-52 h-52 rounded-full bg-white/10">
-          👕
+        {/* Watermark */}
+        <div className="absolute -right-8 -bottom-12 select-none opacity-10">
+          <span className="text-[260px] font-black text-white">a</span>
         </div>
       </div>
     </Card>

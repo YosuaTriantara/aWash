@@ -25,7 +25,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 // ─── Role Redirect Map ────────────────────────────────────────────────────────
 
 const ROLE_REDIRECT: Record<string, string> = {
-  CUSTOMER: '/',
+  CUSTOMER: '/dashboard',
   ADMIN: '/admin',
   KURIR: '/kurir',
 };
@@ -54,13 +54,16 @@ export default function LoginPage() {
   });
   
   useEffect(() => {
-    if (hydrated && user) {
-      router.replace(
-        user.role === 'ADMIN' ? '/admin' :
-        user.role === 'KURIR' ? '/kurir' : '/'
-      );
-    }
-  }, [user, hydrated]);
+    if (!hydrated || !user) return;
+
+    router.replace(
+      user.role === 'ADMIN'
+        ? '/admin'
+        : user.role === 'KURIR'
+        ? '/kurir'
+        : '/dashboard'
+    );
+  }, [user, hydrated, router]);
 
   if (hydrated && user) return null;
 

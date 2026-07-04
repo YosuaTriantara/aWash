@@ -42,20 +42,25 @@ export const adminMenu = [
 
 export const customerMenu = [
   {
-    title: "AAA",
-    href: "/customer",
+    title: "Dashboard",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "bbb",
-    href: "/customer/bbb",
+    title: "Pesanan Baru",
+    href: "/pesanan/baru",
     icon: ClipboardList,
   },
   {
-    title: "ccc",
-    href: "/customer/ccc",
-    icon: Truck,
-  }
+    title: "Riwayat Pesanan",
+    href: "/riwayat",
+    icon: History,
+  },
+  {
+    title: "Profil",
+    href: "/profil",
+    icon: User,
+  },
 ];
 
 export const kurirMenu = [
