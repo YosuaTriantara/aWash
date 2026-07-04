@@ -84,7 +84,7 @@ const getKurirList = async (id_user, { page = 1, limit = 10, status }) => {
 
   const [data, total] = await Promise.all([
     prisma.kurir.findMany({
-      where: { id_outlet },
+      where,
       include: {
         user: {
           select: {
@@ -98,7 +98,7 @@ const getKurirList = async (id_user, { page = 1, limit = 10, status }) => {
       skip,
       take: limit,
     }),
-    prisma.kurir.count({ where: { id_outlet } }),
+    prisma.kurir.count({ where }),
   ]);
   return {
     data,

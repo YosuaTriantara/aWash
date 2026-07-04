@@ -51,6 +51,7 @@ const getKurirList = async (req, res) => {
     const result = await adminService.getKurirList(req.user.id_user, {
       page,
       limit,
+      status,
     });
     return successResponse(res, result, "Daftar kurir berhasil diambil");
   } catch (error) {
