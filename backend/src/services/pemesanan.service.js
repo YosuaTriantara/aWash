@@ -84,9 +84,29 @@ const createPemesanan = async (id_user, data) => {
   const grand_total = total_laundry + total_pengantaran;
 
   // 7. Estimasi selesai berdasarkan layanan terlama
+  function hitungEstimasiSelesai(tanggalMulai, layananList) {
+  const estimasi = new Date(tanggalMulai);
+
+  let durasiTerlamaJam = 0;
+
+  for (const layanan of layananList) {
+    let durasiJam = layanan.estimasi_durasi;
+
+    if (layanan.satuan_durasi === "HARI") {
+      durasiJam *= 24;
+    }
+
+    durasiTerlamaJam = Math.max(durasiTerlamaJam, durasiJam);
+  }
+
+  estimasi.setHours(estimasi.getHours() + durasiTerlamaJam);
+
+  return estimasi;
+}
+  const tanggal_pesan = new Date();
   const estimasi_selesai = hitungEstimasiSelesai(
-    new Date(data.tanggal_antar_request),
-    [layanan],
+    tanggal_pesan,
+    [layanan]
   );
 
   // 8. Buat semua record dalam satu transaksi
@@ -97,6 +117,7 @@ const createPemesanan = async (id_user, data) => {
         id_outlet: data.id_outlet,
         tanggal_pesan: new Date(),
         status_terkini: "DIBUAT",
+        tanggal_pesan,
         estimasi_selesai,
         total_laundry,
         total_pengantaran,

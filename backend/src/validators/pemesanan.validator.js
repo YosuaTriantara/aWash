@@ -7,15 +7,19 @@ const createPemesananSchema = z
     metode_jemput: z.enum(["DIAMBIL_SENDIRI", "DIJEMPUT_KURIR"]),
     tanggal_antar_request: z
       .string()
-      .datetime("Format tanggal antar tidak valid"),
+      .datetime("Format tanggal antar tidak valid")
+      .optional()
+      .nullable(),
     tanggal_jemput_request: z
       .string()
       .datetime("Format tanggal jemput tidak valid")
-      .optional(),
+      .optional()
+      .nullable(),
     id_slot_antar: z
       .string()
       .length(36, "id_slot_antar harus berupa UUID valid")
-      .optional(),
+      .optional()
+      .nullable(),
     catatan: z.string().optional(),
     items: z
       .array(
