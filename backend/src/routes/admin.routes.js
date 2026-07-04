@@ -59,6 +59,7 @@ router.patch("/pemesanan/:id_pemesanan/status",validate(updateStatusPesananSchem
 router.get("/pengantaran", adminController.getPengantaranList);
 router.post("/pengantaran", validate(createPengantaranSchema),adminController.createPengantaran,);
 router.patch("/pengantaran/:id_pengantaran/assign",validate(assignKurirSchema),adminController.assignKurir,);
+router.get("/pengantaran/:id_pengantaran", adminController.getPengantaranById);
 
 // ─── Transaksi ────────────────────────────────────────────────────────────────
 

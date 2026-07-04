@@ -47,6 +47,7 @@ const getKurirList = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status || null;
     const result = await adminService.getKurirList(req.user.id_user, {
       page,
       limit,
@@ -266,6 +267,18 @@ const getPengantaranList = async (req, res) => {
   }
 };
 
+const getPengantaranById = async (req, res) => {
+  try {
+    const result = await adminService.getPengantaranById(
+      req.user.id_user,
+      req.params.id_pengantaran,
+    );
+    return successResponse(res, result, "Detail pengantaran berhasil diambil");
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
 const createPengantaran = async (req, res) => {
   try {
     const result = await adminService.createPengantaran(
@@ -361,6 +374,7 @@ module.exports = {
   verifikasiPesanan,
   updateStatusPesanan,
   getPengantaranList,
+  getPengantaranById,
   createPengantaran,
   assignKurir,
   getTransaksiList,

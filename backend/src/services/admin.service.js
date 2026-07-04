@@ -78,6 +78,10 @@ const updateOutlet = async (id_user, data) => {
 const getKurirList = async (id_user, { page = 1, limit = 10 }) => {
   const { id_outlet } = await getAdminData(id_user);
   const skip = (page - 1) * limit;
+
+  const where = { id_outlet };
+  if (status) where.status_kurir = status;
+
   const [data, total] = await Promise.all([
     prisma.kurir.findMany({
       where: { id_outlet },
@@ -338,6 +342,7 @@ const getPemesananList = async (
             kurir: { include: { user: { select: { nama: true } } } },
           },
         },
+        transaksi: true,
       },
       skip,
       take: limit,
@@ -516,7 +521,10 @@ const getPengantaranList = async (
   const { id_outlet } = await getAdminData(id_user);
   const skip = (page - 1) * limit;
 
-  const where = { pemesanan: { id_outlet } };
+  const where = { 
+    pemesanan: { id_outlet },
+    slot: { jenis_pengantaran: "DIJEMPUT"} 
+  };
   if (status) where.status_pengantaran = status;
 
   const [data, total] = await Promise.all([
@@ -544,6 +552,32 @@ const getPengantaranList = async (
     data,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   };
+};
+
+const getPengantaranById = async (id_user, id_pengantaran) => {
+  const { id_outlet } = await getAdminData(id_user);
+
+  const pengantaran = await prisma.pengantaran.findFirst({
+    where: {
+      id_pengantaran,
+      pemesanan: { id_outlet },
+    },
+    include: {
+      pemesanan: {
+        include: {
+          customer: {
+            include: { user: { select: { nama: true, no_telepon: true } } },
+          },
+          detail_pemesanan: true,
+        },
+      },
+      slot: true,
+      kurir: { include: { user: { select: { nama: true, no_telepon: true } } } },
+    },
+  });
+
+  if (!pengantaran) throw new Error("Pengantaran tidak ditemukan");
+  return pengantaran;
 };
 
 const createPengantaran = async (id_user, data) => {
@@ -747,6 +781,7 @@ module.exports = {
   verifikasiPesanan,
   updateStatusPesanan,
   getPengantaranList,
+  getPengantaranById,
   createPengantaran,
   assignKurir,
   getTransaksiList,

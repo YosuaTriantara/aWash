@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { usePengantaranList } from '@/hooks/admin/usePengantaran';
 
 import Card from '@/components/ui/card';
 import Button from '@/components/ui/button';
@@ -14,32 +16,12 @@ import TableCell from '@/components/ui/tableCell';
 
 import SearchBar from '@/components/common/searchBar';
 
-const deliveries = [
-  {
-    id: 'PSN001',
-    customer: 'Alia',
-    courier: 'Agung',
-    status: 'MENUNGGU',
-    createdAt: '08:30',
-  },
-  {
-    id: 'PSN002',
-    customer: 'Budi',
-    courier: 'Agung',
-    status: 'MENUJU LOKASI',
-    createdAt: '08:45',
-  },
-  {
-    id: 'PSN003',
-    customer: 'Cici',
-    courier: 'Agung',
-    status: 'SAMPAI LOKASI',
-    createdAt: '09:05',
-  },
-];
-
 export default function PengantaranPage() {
   const [search, setSearch] = useState('');
+  const router = useRouter();
+
+  const { data, isLoading } = usePengantaranList();
+  const deliveries = data?.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -75,35 +57,29 @@ export default function PengantaranPage() {
             </TableRow>
           </TableHead>
 
-          <tbody>
-
+            <tbody>
             {deliveries.map((item) => (
-
-              <TableRow key={item.id}>
-
-                <TableCell>{item.id}</TableCell>
-
-                <TableCell>{item.customer}</TableCell>
-
-                <TableCell>{item.courier}</TableCell>
-
+                <TableRow key={item.id_pengantaran}>
+                <TableCell>{item.id_pemesanan}</TableCell>
+                <TableCell>{item.pemesanan.customer.user.nama}</TableCell>
+                <TableCell>{item.kurir?.user.nama ?? '-'}</TableCell>
                 <TableCell>
-                  <StatusBadge status={item.status} />
+                    <StatusBadge status={item.status_pengantaran} />
                 </TableCell>
-
-                <TableCell>{item.createdAt}</TableCell>
-
                 <TableCell>
-                  <Button variant="secondary">
+                    {new Date(item.created_at).toLocaleString('id-ID')}
+                </TableCell>
+                <TableCell>
+                    <Button
+                    variant="secondary"
+                    onClick={() => router.push(`/admin/pengantaran/${item.id_pengantaran}`)}
+                    >
                     Detail
-                  </Button>
+                    </Button>
                 </TableCell>
-
-              </TableRow>
-
+                </TableRow>
             ))}
-
-          </tbody>
+            </tbody>
 
         </Table>
 
