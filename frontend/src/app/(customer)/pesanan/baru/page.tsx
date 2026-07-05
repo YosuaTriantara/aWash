@@ -247,7 +247,7 @@ const handleCreateOrder = async () => {
 
     alert("Pesanan berhasil dibuat.");
 
-    //router.push("/riwayat");
+    router.push("/riwayat");
 
   } 
   

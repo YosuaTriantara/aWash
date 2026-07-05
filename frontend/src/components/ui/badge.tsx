@@ -11,27 +11,33 @@ export default function StatusBadge({
   const normalized = status.toUpperCase();
 
   const styles = {
-    MENUNGGU: 'bg-yellow-100 text-yellow-700',
+  MENUNGGU: "bg-yellow-100 text-yellow-700",
 
-    DIPROSES: 'bg-blue-100 text-blue-700',
+  DIBUAT: "bg-yellow-100 text-yellow-700",
 
-    'MENUJU LOKASI': 'bg-purple-100 text-purple-700',
+  DIPROSES: "bg-blue-100 text-blue-700",
 
-    'SAMPAI LOKASI': 'bg-cyan-100 text-cyan-700',
+  SIAP: "bg-purple-100 text-purple-700",
 
-    PENDING: 'bg-orange-100 text-orange-700',
+  "MENUJU LOKASI": "bg-purple-100 text-purple-700",
 
-    PAID: 'bg-green-100 text-green-700',
+  "SAMPAI LOKASI": "bg-cyan-100 text-cyan-700",
 
-    SELESAI: 'bg-green-100 text-green-700',
-  };
+  PENDING: "bg-orange-100 text-orange-700",
+
+  PAID: "bg-green-100 text-green-700",
+
+  SELESAI: "bg-green-100 text-green-700",
+
+  DIBATALKAN: "bg-red-100 text-red-700",
+};
 
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
+        "inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold",
         styles[normalized as keyof typeof styles] ??
-          'bg-gray-100 text-gray-600'
+          "bg-gray-100 text-gray-600"
       )}
     >
       {status}
